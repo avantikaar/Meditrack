@@ -1,71 +1,98 @@
-💊 MediTrack – Smart Pill Reminder Firmware & Linux Host
-<div align="center">
-https://img.shields.io/badge/C%2B%2B-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white
-https://img.shields.io/badge/ESP32-E7352C?style=for-the-badge&logo=espressif&logoColor=white
-https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white
-https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black
-https://img.shields.io/badge/Pytest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white
+💊 MediTrack
+Smart Pill Reminder Firmware & Linux Host
+https://img.shields.io/badge/C%2B%2B-00599C?style=flat-square&logo=c%2B%2B&logoColor=white
+https://img.shields.io/badge/ESP32-E7352C?style=flat-square&logo=espressif&logoColor=white
+https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white
+https://img.shields.io/badge/Linux-FCC624?style=flat-square&logo=linux&logoColor=black
+https://img.shields.io/badge/Pytest-0A9EDC?style=flat-square&logo=pytest&logoColor=white
 
-A robust, fault-tolerant IoT medication management system featuring a multithreaded Linux host and resilient ESP32 firmware.
+📸 Screenshots
+Linux Host Dashboard
+https://assets/final%20dashborad.png
 
-</div>
-📖 Overview
-MediTrack is an end-to-end embedded system designed to ensure patients never miss a dose. It combines an ESP32-based hardware dispenser with a real-time Linux desktop dashboard. The system is built for reliability, featuring a fault state machine, debounced GPIO, power-loss-safe circular logging, and a CRC-protected UART communication protocol.
+Alternative Dashboard View
+https://assets/sample%20dash.png
 
-✨ Key Highlights
-Resilient Firmware: RTC-interrupt dose scheduler, debounced GPIO, and a fault state machine.
+Hardware Prototype (7-Day Pill Dispenser)
+https://assets/meditrack%20pillbox.png
 
-Power-Loss Safe Logging: CRC-16 circular buffer that survives unexpected power cuts mid-write.
+UART Serial Log (CRC-8 Communication)
+https://assets/serial%20log.png
 
-Robust Host Application: Multithreaded Python/Linux host using a CRC-8 UART protocol.
+Pytest Regression Suite
+https://assets/reg%20tests.png
 
-Advanced Concurrency: Bounded queue with backpressure and explicit drop accounting.
+📌 Overview
+MediTrack is an end-to-end embedded system designed to ensure patients never miss a dose. It combines an ESP32-based physical dispenser with a multithreaded Linux desktop dashboard. The system is built for reliability, featuring a fault state machine, debounced GPIO, power-loss-safe circular logging, and a CRC-protected UART communication protocol.
 
-100% Tested: 24 comprehensive pytest regression tests with documented root-cause analyses for failure injection.
+The project addresses a critical healthcare problem: medication non-adherence. By providing hardware-level alarms and a robust logging system, MediTrack ensures that doses are tracked accurately, even in the event of unexpected power loss or system faults.
 
-📸 Project Showcase
-🖥️ Linux Host Dashboard
-The Python-based dashboard provides a clean UI to monitor schedules, adherence rates, device status, and live system logs.
+The platform:
 
-<p align="center"> <img src="assets/final%20dashborad.png" alt="MediTrack Expanded Dashboard" width="100%"> </p> <p align="center"> <img src="assets/sample%20dash.png" alt="MediTrack Compact Dashboard" width="100%"> </p>
-🔌 Hardware Prototype
-A physical 7-day pill dispenser equipped with an ESP32, RTC, LCD screen, physical navigation buttons, and per-day LED indicators.
+Schedules doses using a hardware RTC (Real-Time Clock).
 
-<p align="center"> <img src="assets/meditrack%20pillbox.png" alt="MediTrack Hardware Prototype" width="80%"> </p>
-⚙️ System Architecture & Features
-1. ESP32 Firmware (C/C++)
-RTC-Interrupt Scheduler: Precise dose timing using a hardware Real-Time Clock.
+Handles physical button interactions with debounced GPIO.
 
-Fault State Machine: Gracefully handles system states (INIT, READY, ALARM, ACKED, FAULT).
+Survives power-loss events mid-write using a CRC-16 circular buffer.
 
-Debounced GPIO: Hardware-level button filtering to prevent false acknowledgments.
+Communicates with a Linux host via a CRC-8 UART protocol with ACK/retry.
 
-Data Integrity: Uses Non-Volatile Storage (NVS) as EEPROM with a CRC-16 protected circular buffer.
+✨ Features
+Feature	Description
+⏰ RTC-Interrupt Scheduler	Precise dose timing using a hardware Real-Time Clock to ensure alarms are never missed.
+🛡️ Power-Loss Safe Logging	Implements a CRC-16 protected circular buffer in NVS/EEPROM that recovers safely from unexpected brownouts.
+🔄 Fault State Machine	Gracefully handles system states (INIT, READY, ALARM, ACKED, FAULT) with robust error recovery.
+🐍 Multithreaded Linux Host	Python-based host application with dedicated reader/writer threads, preventing UI blocking.
+📊 Backpressure & Queueing	Bounded queue (queue.Queue) prevents memory overflow, with explicit drop accounting during high traffic.
+🧪 Extensive Test Suite	24 automated pytest regression tests covering protocol encoding, ACK/retry logic, and fault injection.
+The Hardware-to-Host Pipeline
+Every alarm and user interaction flows through a structured, fault-tolerant pipeline:
 
-2. Linux Host (Python)
-Multithreaded Architecture: Dedicated threads for serial reading and writing to prevent blocking.
+Stage	Component	Responsibility
+1	ESP32 Firmware	RTC triggers alarm, GPIO debounces button press, state machine updates.
+2	Data Integrity	Event is written to the CRC-16 circular buffer (survives power loss).
+3	UART Protocol	Event is framed with a CRC-8 checksum and transmitted via serial.
+4	Python Host	Dedicated thread receives data, validates CRC, enqueues to bounded queue, and updates the UI.
+Production deployment note: The host application is designed to simulate power-loss and fault injection during testing to ensure the CRC-16 recovery logic works flawlessly before hardware deployment.
 
-Custom Protocol: Implements a lightweight 0xAA | len | type | payload | CRC-8 frame structure.
+🛠️ Tech Stack
+Firmware (ESP32)
 
-Reliability: Implements ACK/retry mechanisms for lost packets.
+C/C++ (Arduino Framework / ESP-IDF)
 
-Backpressure Management: Uses a bounded queue (queue.Queue(maxsize=100)) to prevent memory overflow, with robust drop accounting.
+RTC & NVS (Non-Volatile Storage)
 
-🛠️ Engineering & Root-Cause Analysis
-During development, four critical system failures were identified, root-caused (using serial logs and a logic analyzer), and fixed:
+Hardware Interrupts & GPIO Polling
 
-Button Bounce: Fixed by implementing a 30ms software debounce.
+Linux Host (Python)
 
-Power-Loss Corruption: Fixed by writing the CRC-16 record last and validating on boot.
+Python 3.9+
 
-Alarm Missed During Blocking Flash Write: Fixed by decoupling the RTC interrupt from the flash write routine.
+Multithreading (threading, queue.Queue)
 
-Queue Starvation: Fixed by implementing a bounded queue with backpressure drop policies.
+PySerial (UART Communication)
 
-🧪 Automated Testing & Validation
-Robustness is validated via a comprehensive regression suite. The system runs entirely automated tests for protocol encoding/decoding, CRC validation, ACK/retry logic, queue limits, and log parsing.
+Tkinter / PyQt (Dashboard UI)
 
-<div align="center"> <img src="assets/serial%20log.png" alt="Serial Log UART Communication" width="48%"> <img src="assets/reg%20tests.png" alt="Pytest Regression Tests" width="48%"> </div>
+Testing & Debugging
+
+Pytest (24 Regression Tests)
+
+Logic Analyzer (Hardware debugging)
+
+Serial Logs (Fault injection root-cause analysis)
+
+🔌 UART Protocol Reference
+The system uses a custom lightweight frame structure: 0xAA | len | type | payload | CRC-8.
+
+Direction	Command	Description	CRC
+ESP32 → Host	DOSE_ALERT	Triggered when RTC alarm fires	✅ CRC-8
+ESP32 → Host	DOSE_ACK	Triggered when user presses button	✅ CRC-8
+Host → ESP32	ACK	Acknowledges receipt of an alert	✅ CRC-8
+Host → ESP32	SET_SCHEDULE	Updates the RTC schedule	✅ CRC-8
+🧪 Testing
+The system includes a comprehensive test suite to validate protocol integrity, queue management, and fault recovery.
+
 text
 $ pytest -q
 ====================== test session starts ======================
@@ -75,23 +102,3 @@ test_uart_protocol.py ......                               [ 62%]
 test_fault_recovery.py .......                             [ 91%]
 test_queue.py ..                                           [100%]
 ====================== 24 passed in 6.21s ======================
-🚀 Getting Started
-Prerequisites
-Hardware: ESP32 Dev Board, DS3231 RTC, Pushbuttons, LEDs, Buzzer.
-
-Software: PlatformIO (for ESP32), Python 3.9+ (for Linux Host).
-
-Installation & Execution
-Flash the Firmware:
-Open the firmware/ directory in PlatformIO, connect the ESP32 via USB, and upload.
-
-Run the Host:
-
-bash
-cd host/
-pip install -r requirements.txt
-python host.py --port /dev/ttyUSB0
-Run Tests:
-
-bash
-pytest -v
