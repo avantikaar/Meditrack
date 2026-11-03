@@ -12,19 +12,19 @@ Smart Pill Reminder Firmware & Linux Host
 ## 📸 Screenshots
 
 ### Main Dashboard
-![Final Dashboard](./assests/final%20dashborad.png)
+![Final Dashboard](./final%20dashborad.png)
 
 ### Compact Dashboard View
-![Sample Dashboard](./assests/sample%20dash.png)
+![Sample Dashboard](./sample%20dash.png)
 
 ### Hardware Prototype
-![MediTrack Hardware](./assests/meditrack%20pillbox.png)
+![MediTrack Hardware](./meditrack%20pillbox.png)
 
 ### UART Serial Log (CRC-8)
-![Serial Log](./assests/serial%20log.png)
+![Serial Log](./serial%20log.png)
 
 ### Pytest Regression Suite
-![Regression Tests](./assests/reg%20tests.png)
+![Regression Tests](./reg%20tests.png)
 
 ---
 
